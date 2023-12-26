@@ -47,9 +47,7 @@ impl Game {
                 if let Some(neighbors_to_check) = self.neighbors_map.get(&(col, row)) {
                     let mut positive_neighbors: u8 = 0;
                     for pos in neighbors_to_check {
-                        // println!("neighbours: {:?}", neighbors_to_check);
                         if self.live_cells.contains(&(pos.0, pos.1)) {
-                            // println!("Cell: {}, {} is alive", pos.0, pos.1);
                             positive_neighbors += 1;
                         }
                     }
@@ -103,10 +101,11 @@ impl Game {
                             self.live_cells.remove(&(col, row));
                         }
                     }
-                    false =>
+                    false => {
                         if alive_neighbors == 3 {
                             self.live_cells.insert((col, row));
                         }
+                    }
                 }
             }
         }
@@ -140,27 +139,12 @@ mod tests {
         game.neighbors_count.insert((0, 0), 3); // Set up neighbors count
         game.apply_rules();
         assert_eq!(game.live_cells.contains(&coords), true);
-        //
-        // game.grid[0][0] = Cell::Dead;
-        // game.neighbors_count.insert((0, 0), 3);
-        // game.apply_rules();
-        // assert_eq!(game.grid[0][0], Cell::Alive);
-        //
-        // game.grid[0][0] = Cell::Dead;
-        // game.neighbors_count.insert((0, 0), 2);
-        // game.apply_rules();
-        // assert_eq!(game.grid[0][0], Cell::Dead);
     }
 
     #[test]
     fn test_get_neighbors() {
-        // Create a test scenario
         let mut game = Game::initialize((3, 3), 1.0);
-
-        // Call the function to get neighbors for a specific cell
         let neighbors = game.get_neighbors(0, 0);
-
-        // Assert the expected neighbors for the given input cell
         assert_eq!(
             neighbors,
             vec![(0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
@@ -203,7 +187,6 @@ mod tests {
 
     #[test]
     fn test_count_neighbors() {
-        // Create test scenario
         let mut game = Game::initialize((3, 4), 1.0);
         game.live_cells.clear(); // Kill all cells
 
@@ -214,7 +197,6 @@ mod tests {
         game.create_neighbor_map();
         game.count_neighbors();
 
-        // Assert the expected neighbor counts for specific cells
         assert_eq!(game.neighbors_count[&(0, 0)], 2, "For cell (0, 0)");
         assert_eq!(game.neighbors_count[&(0, 1)], 1, "For cell (0, 1)");
         assert_eq!(game.neighbors_count[&(0, 2)], 1, "For cell (0, 2)");

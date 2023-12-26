@@ -64,10 +64,8 @@ impl App {
     }
 
     fn update(&mut self, _args: &UpdateArgs) {
-        // self.rotation += 2.0 * args.dt;
         self.game.count_neighbors();
         self.game.apply_rules();
-
     }
 }
 
