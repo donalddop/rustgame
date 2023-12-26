@@ -25,7 +25,7 @@ pub struct Game {
 
 impl Game {
     pub fn initialize(grid_size: (i32, i32), cell_size: f64) -> Self {
-        let mut neighbors_map: HashMap<(usize, usize), u8> = HashMap::new();
+        let neighbors_map: HashMap<(usize, usize), u8> = HashMap::new();
         let grid = Self::create_random_grid(grid_size);
         Game { grid_size, cell_size, grid, neighbors_map }
     }
@@ -48,14 +48,14 @@ impl Game {
     pub fn count_neighbors(&mut self) {
         for col in 0..self.grid_size.0 as usize {
             for row in 0..self.grid_size.1 as usize {
-                let neighbors_to_check: Vec<(u8, u8)> = self.get_neighbors(row, col);
+                let neighbors_to_check: Vec<(u8, u8)> = self.get_neighbors(col, row);
                 let mut positive_neighbors: u8 = 0;
                 for pos in neighbors_to_check {
                     if self.grid[pos.0 as usize][pos.1 as usize] == Cell::Alive {
                         positive_neighbors += 1;
                     }
                 }
-                self.neighbors_map.insert((row, col), positive_neighbors);
+                self.neighbors_map.insert((col, row), positive_neighbors);
             }
         }
     }
@@ -94,20 +94,20 @@ impl Game {
     pub fn apply_rules(&mut self) {
         for col in 0..self.grid_size.0 as usize {
             for row in 0..self.grid_size.1 as usize {
-                let mut cell = self.grid[col][row];
+                let cell: Cell = self.grid[col][row];
                 let alive_neighbors = self.neighbors_map[&(col, row)];
                 match cell {
                     Cell::Alive => {
                         if alive_neighbors < 2 {
-                            self.grid[col][row] = Cell::Dead;
+                            self.grid[col][row].kill();
                         }
                         else if alive_neighbors > 3 {
-                            self.grid[col][row] = Cell::Dead;
+                            self.grid[col][row].kill();
                         }
                     }
                     Cell::Dead => {
                         if alive_neighbors == 3 {
-                            self.grid[col][row] = Cell::Alive
+                            self.grid[col][row].live()
                         }
                     }
                 }

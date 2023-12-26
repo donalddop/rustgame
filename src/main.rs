@@ -15,10 +15,10 @@ use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
-use piston::{Button, ButtonEvent, ButtonState, MouseButton, MouseCursorEvent};
+use piston::{Button, ButtonEvent, ButtonState, MouseButton};
 use piston::window::WindowSettings;
-const MAX_FPS: i32 = 144;
-const GRID_SIZE: (i32, i32) = (100, 100);
+const MAX_FPS: i32 = 60;
+const GRID_SIZE: (i32, i32) = (50, 50);
 const CELL_SIZE: f64 = 10.0;
 
 pub struct App {
@@ -30,13 +30,10 @@ impl App {
 
     fn render(&mut self, _args: &RenderArgs) {
         use graphics::*;
-
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
         let square = rectangle::square(0.0, 0.0, self.game.cell_size);
-        // let (window_width, window_height) = (args.window_size[0], args.window_size[1]);
         let cell_size = self.game.cell_size;
         let grid = &self.game.grid;
 
@@ -83,7 +80,7 @@ fn main() {
 }
 
 
-fn run_the_game(mut game: GameType) {
+fn run_the_game(game: GameType) {
 // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
     let target_fps = MAX_FPS;
@@ -102,7 +99,6 @@ fn run_the_game(mut game: GameType) {
     // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        // rotation: 0.0,
         game
     };
 
