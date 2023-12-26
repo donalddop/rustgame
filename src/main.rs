@@ -1,7 +1,8 @@
 #![allow(unused_comparisons)]
 
 mod game;
-use game::Cell;
+
+use std::collections::HashSet;
 use game::Game;
 type GameType = Game;
 
@@ -12,15 +13,19 @@ extern crate piston;
 extern crate rand;
 
 use glutin_window::GlutinWindow as Window;
+use graphics::{Context, Graphics, rectangle, Transformed};
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
-use piston::{Button, ButtonEvent, ButtonState, MouseButton};
+use piston::{Button, ButtonEvent, ButtonState, EventLoop, MouseButton};
 use piston::window::WindowSettings;
-const TARGET_FPS: f64 = 144.0;
-const GRID_SIZE: (i32, i32) = (200, 200);
-const CELL_SIZE: f64 = 3.0;
+use crate::game::GridCoords;
 
+const TARGET_FPS: u64 = 144;
+const GRID_SIZE: (i32, i32) = (200, 150);
+const CELL_SIZE: f64 = 5.0;
+const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     game: GameType
@@ -28,37 +33,33 @@ pub struct App {
 
 impl App {
 
+    fn draw_grid<G>(
+        live_cells: &HashSet<GridCoords>,
+        cell_size: f64,
+        c: Context,
+        gl: &mut G,
+        square: graphics::types::Rectangle,
+    ) where
+        G: Graphics,
+    {
+        for &coords in live_cells {
+            let x_move = coords.0 as f64 * cell_size;
+            let y_move = coords.1 as f64 * cell_size;
+            let transform = c.transform.trans(x_move, y_move);
+            rectangle(WHITE, square, transform, gl)
+        }
+    }
+
     fn render(&mut self, _args: &RenderArgs) {
         use graphics::*;
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
-        const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
         let square = rectangle::square(0.0, 0.0, self.game.cell_size);
         let cell_size = self.game.cell_size;
-        let grid = &self.game.grid;
+        let live_cells = &self.game.live_cells;
 
         self.gl.draw(_args.viewport(), |c, gl| {
-            // Clear the screen.
             clear(BLACK, gl);
-            // Draw each of the cells
-            let mut transform;
-            let mut x_move;
-            let mut y_move = 0.0;
-            for row in grid {
-                let mut curr_y_move = y_move;
-                x_move = 0.0;
-                for cell in row {
-                    transform = c
-                        .transform
-                        .trans(x_move, curr_y_move);
-                    if Cell::Alive.eq(cell) {
-                        rectangle(WHITE, square, transform, gl)
-                    }
-                    x_move += cell_size;
-                }
-                curr_y_move += cell_size;
-                y_move = curr_y_move;
-            }
+            App::draw_grid(live_cells, cell_size, c, gl, square);
         });
     }
 
@@ -69,14 +70,6 @@ impl App {
 
     }
 }
-
-fn main() {
-    println!("Starting!");
-    let mut game: GameType = Game::initialize(GRID_SIZE, CELL_SIZE);
-    game.create_neighbor_map(); // TODO: Initialize the map without this call
-    run_the_game(game);
-}
-
 
 fn run_the_game(game: GameType) {
 // Change this to OpenGL::V2_1 if not working.
@@ -98,7 +91,7 @@ fn run_the_game(game: GameType) {
         game
     };
 
-    let mut events = Events::new(EventSettings::new());
+    let mut events = Events::new(EventSettings::new().max_fps(TARGET_FPS));
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.button_args() {
             if args.button == Button::Mouse(MouseButton::Left) && args.state == ButtonState::Press {
@@ -113,18 +106,13 @@ fn run_the_game(game: GameType) {
 
         if let Some(args) = e.update_args() {
             app.update(&args);
-            std::thread::sleep(std::time::Duration::from_secs_f64(1.0 / TARGET_FPS));
         }
     }
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
 
-    #[test]
-    fn cell_is_dead_after_kill() {
-        let mut cell: Cell = Cell::Alive;
-        cell.kill();
-        assert_eq!(Cell::Dead, cell);
-    }
+fn main() {
+    println!("Starting!");
+    let mut game: GameType = Game::initialize(GRID_SIZE, CELL_SIZE);
+    game.create_neighbor_map(); // TODO: Initialize the map without this call
+    run_the_game(game);
 }
