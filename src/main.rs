@@ -17,9 +17,9 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::{Button, ButtonEvent, ButtonState, MouseButton};
 use piston::window::WindowSettings;
-const MAX_FPS: i32 = 60;
-const GRID_SIZE: (i32, i32) = (50, 50);
-const CELL_SIZE: f64 = 10.0;
+const TARGET_FPS: f64 = 144.0;
+const GRID_SIZE: (i32, i32) = (200, 200);
+const CELL_SIZE: f64 = 3.0;
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
@@ -40,6 +40,7 @@ impl App {
         self.gl.draw(_args.viewport(), |c, gl| {
             // Clear the screen.
             clear(BLACK, gl);
+            // Draw each of the cells
             let mut transform;
             let mut x_move;
             let mut y_move = 0.0;
@@ -59,23 +60,20 @@ impl App {
                 y_move = curr_y_move;
             }
         });
-        // let mut input = String::new();
-        //
-        // io::stdin().read_line(&mut input)
-        //     .ok()
-        //     .expect("Couldn't read line");
     }
 
     fn update(&mut self, _args: &UpdateArgs) {
         // self.rotation += 2.0 * args.dt;
         self.game.count_neighbors();
         self.game.apply_rules();
+
     }
 }
 
 fn main() {
     println!("Starting!");
-    let game: GameType = Game::initialize(GRID_SIZE, CELL_SIZE);
+    let mut game: GameType = Game::initialize(GRID_SIZE, CELL_SIZE);
+    game.create_neighbor_map(); // TODO: Initialize the map without this call
     run_the_game(game);
 }
 
@@ -83,8 +81,6 @@ fn main() {
 fn run_the_game(game: GameType) {
 // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
-    let target_fps = MAX_FPS;
-    let target_frame_duration = std::time::Duration::from_secs(1) / target_fps as u32;
 
     // Create a Glutin window.
     let mut window: Window = WindowSettings::new(
@@ -105,10 +101,9 @@ fn run_the_game(game: GameType) {
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.button_args() {
-            if args.button == Button::Mouse(MouseButton::Left) {
-                if args.state == ButtonState::Press {
-                    app.game = Game::initialize(GRID_SIZE, CELL_SIZE)
-                }
+            if args.button == Button::Mouse(MouseButton::Left) && args.state == ButtonState::Press {
+                app.game = Game::initialize(GRID_SIZE, CELL_SIZE);
+                app.game.create_neighbor_map()
             }
         }
 
@@ -118,8 +113,8 @@ fn run_the_game(game: GameType) {
 
         if let Some(args) = e.update_args() {
             app.update(&args);
+            std::thread::sleep(std::time::Duration::from_secs_f64(1.0 / TARGET_FPS));
         }
-        std::thread::sleep(target_frame_duration);
     }
 }
 #[cfg(test)]

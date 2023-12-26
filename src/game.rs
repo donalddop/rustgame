@@ -20,14 +20,16 @@ pub struct Game {
     pub(crate) grid_size: (i32, i32),
     pub(crate) cell_size: f64,
     pub(crate) grid: Vec<Vec<Cell>>,
-    neighbors_map: HashMap<(usize, usize), u8>
+    neighbors_count: HashMap<(usize, usize), u8>,
+    neighbors_map: HashMap<(usize, usize),  Vec<(u8, u8)>>
 }
 
 impl Game {
     pub fn initialize(grid_size: (i32, i32), cell_size: f64) -> Self {
-        let neighbors_map: HashMap<(usize, usize), u8> = HashMap::new();
+        let neighbors_count: HashMap<(usize, usize), u8> = HashMap::new();
+        let neighbors_map: HashMap<(usize, usize), Vec<(u8, u8)>> = HashMap::new();
         let grid = Self::create_random_grid(grid_size);
-        Game { grid_size, cell_size, grid, neighbors_map }
+        Game { grid_size, cell_size, grid, neighbors_count, neighbors_map}
     }
 
     pub fn create_random_grid(grid_size: (i32, i32)) -> Vec<Vec<Cell>> {
@@ -45,17 +47,29 @@ impl Game {
         grid
     }
 
+    pub fn create_neighbor_map(&mut self) {
+        for col in 0..self.grid_size.0 as usize {
+            for row in 0..self.grid_size.1 as usize {
+                let neighbors: Vec<(u8, u8)> = self.get_neighbors(col, row);
+                self.neighbors_map.insert((col, row), neighbors);
+            }
+        }
+    }
+
     pub fn count_neighbors(&mut self) {
         for col in 0..self.grid_size.0 as usize {
             for row in 0..self.grid_size.1 as usize {
-                let neighbors_to_check: Vec<(u8, u8)> = self.get_neighbors(col, row);
-                let mut positive_neighbors: u8 = 0;
-                for pos in neighbors_to_check {
-                    if self.grid[pos.0 as usize][pos.1 as usize] == Cell::Alive {
-                        positive_neighbors += 1;
+                if let Some(neighbors_to_check) = self.neighbors_map.get(&(col, row)) {
+                    let mut positive_neighbors: u8 = 0;
+                    for pos in neighbors_to_check {
+                        if self.grid[pos.0 as usize][pos.1 as usize] == Cell::Alive {
+                            positive_neighbors += 1;
+                        }
                     }
+                    self.neighbors_count.insert((col, row), positive_neighbors);
+                } else {
+                    println!("Cell has no neighbors.")
                 }
-                self.neighbors_map.insert((col, row), positive_neighbors);
             }
         }
     }
@@ -95,7 +109,7 @@ impl Game {
         for col in 0..self.grid_size.0 as usize {
             for row in 0..self.grid_size.1 as usize {
                 let cell: Cell = self.grid[col][row];
-                let alive_neighbors = self.neighbors_map[&(col, row)];
+                let alive_neighbors = self.neighbors_count[&(col, row)];
                 match cell {
                     Cell::Alive => {
                         if alive_neighbors < 2 {
