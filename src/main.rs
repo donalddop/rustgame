@@ -19,12 +19,12 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::{Button, ButtonEvent, ButtonState, EventLoop, MouseButton};
 use piston::window::WindowSettings;
+use rand::random;
 use crate::game::GridCoords;
 
 const TARGET_FPS: u64 = 144;
 const GRID_SIZE: (i32, i32) = (200, 150);
 const CELL_SIZE: f64 = 5.0;
-const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
@@ -42,11 +42,16 @@ impl App {
     ) where
         G: Graphics,
     {
-        for &coords in live_cells {
+        let colors: Vec<[f32; 4]> =
+            (0..live_cells.len())
+                .map(|_| [random(), random(), random(), 1.0])
+                .collect();
+        let transform_base = c.transform;
+        for (&coords, &color) in live_cells.iter().zip(colors.iter()) {
             let x_move = coords.0 as f64 * cell_size;
             let y_move = coords.1 as f64 * cell_size;
-            let transform = c.transform.trans(x_move, y_move);
-            rectangle(WHITE, square, transform, gl)
+            let transform = transform_base.trans(x_move, y_move);
+            rectangle(color, square, transform, gl)
         }
     }
 
