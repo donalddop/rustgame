@@ -13,7 +13,7 @@ extern crate piston;
 extern crate rand;
 
 use glutin_window::GlutinWindow as Window;
-use graphics::{Context, Graphics, rectangle, Transformed};
+use graphics::{Context, Graphics, Transformed};
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
@@ -23,12 +23,17 @@ use rand::random;
 use crate::game::GridCoords;
 
 const TARGET_FPS: u64 = 144;
-const GRID_SIZE: (i32, i32) = (200, 150);
-const CELL_SIZE: f64 = 5.0;
+const GRID_SIZE: (i32, i32) = (100, 150);
+const CELL_SIZE: f64 = 3.0;
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+struct Batch {
+    colors: Vec<[f32; 4]>,
+    transforms: Vec<graphics::math::Matrix2d>,
+}
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    game: GameType
+    game: GameType,
+    batch: Batch,
 }
 
 impl App {
@@ -37,8 +42,9 @@ impl App {
         live_cells: &HashSet<GridCoords>,
         cell_size: f64,
         c: Context,
-        gl: &mut G,
-        square: graphics::types::Rectangle,
+        _gl: &mut G,
+        batch: &mut Batch,
+
     ) where
         G: Graphics,
     {
@@ -51,7 +57,8 @@ impl App {
             let x_move = coords.0 as f64 * cell_size;
             let y_move = coords.1 as f64 * cell_size;
             let transform = transform_base.trans(x_move, y_move);
-            rectangle(color, square, transform, gl)
+            batch.colors.push(color);
+            batch.transforms.push(transform);
         }
     }
 
@@ -62,9 +69,15 @@ impl App {
         let cell_size = self.game.cell_size;
         let live_cells = &self.game.live_cells;
 
+        self.batch.colors.clear();
+        self.batch.transforms.clear();
+
         self.gl.draw(_args.viewport(), |c, gl| {
+            App::draw_grid(live_cells, cell_size, c, gl, &mut self.batch);
             clear(BLACK, gl);
-            App::draw_grid(live_cells, cell_size, c, gl, square);
+            for (&color, &transform) in self.batch.colors.iter().zip(self.batch.transforms.iter()) {
+                rectangle(color, square, transform, gl);
+            }
         });
     }
 
@@ -91,7 +104,8 @@ fn run_the_game(game: GameType) {
     // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        game
+        game,
+        batch: Batch { colors: vec![], transforms: vec![] },
     };
 
     let mut events = Events::new(EventSettings::new().max_fps(TARGET_FPS));
