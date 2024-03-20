@@ -4,7 +4,7 @@ pub(crate) type GridCoords = (usize, usize);
 type GridSize = (i32, i32);
 
 
-
+// Represents the game state and logic for the Game of Life.
 pub struct Game {
     pub(crate) grid_size: GridSize,
     pub(crate) cell_size: f64,
@@ -14,6 +14,7 @@ pub struct Game {
 }
 
 impl Game {
+    // Method to initialize the game with a grid size and cell size, creating a random initial grid.
     pub fn initialize(grid_size: GridSize, cell_size: f64) -> Self {
         let neighbors_count: HashMap<GridCoords, u8> = HashMap::new();
         let neighbors_map: HashMap<GridCoords, Vec<(usize, usize)>> = HashMap::new();
@@ -21,6 +22,7 @@ impl Game {
         Game { grid_size, cell_size, live_cells, neighbors_count, neighbors_map}
     }
 
+    // Method to create a random grid.
     pub fn create_random_grid(grid_size: GridSize) -> HashSet<GridCoords> {
         (0..grid_size.1 as usize)
             .flat_map(|row| {
@@ -31,6 +33,7 @@ impl Game {
             .collect()
     }
 
+    // Method to pre-calculate the neighbors of each cell in the grid for faster neighbor counting.
     pub fn create_neighbor_map(&mut self) {
         let grid_size = self.grid_size;
         for col in 0..grid_size.0 as usize {
@@ -57,6 +60,7 @@ impl Game {
         }
     }
 
+    // Helper method to retrieve the neighboring cells of a given cell.
     fn get_neighbors(&mut self, input_col: usize, input_row: usize) -> Vec<(usize, usize)> {
         let mut neighbors_to_check: Vec<(usize, usize)> = Vec::new();
         let rows: Vec<i32> = vec![-1, 0, 1];
@@ -86,7 +90,7 @@ impl Game {
         neighbors_to_check
     }
 
-
+    // Method to apply the rules of the Game of Life to update the game state.
     pub fn apply_rules(&mut self) {
         let grid_size_col = self.grid_size.0 as usize;
         let grid_size_row = self.grid_size.1 as usize;

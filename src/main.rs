@@ -1,11 +1,15 @@
 #![allow(unused_comparisons)]
+// This file contains the main entry point for the Game of Life program.
 
+// Define the game module, which contains the implementation of the Game struct.
 mod game;
 
 use std::collections::HashSet;
+// Alias for the Game struct to simplify code readability.
 use game::Game;
 type GameType = Game;
 
+// External crate dependencies required for graphics and window management.
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
@@ -30,6 +34,8 @@ struct Batch {
     colors: Vec<[f32; 4]>,
     transforms: Vec<graphics::math::Matrix2d>,
 }
+
+// Represents the main application struct responsible for managing game state and rendering.
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     game: GameType,
@@ -62,6 +68,7 @@ impl App {
         }
     }
 
+    // Function for rendering the grid based on live cells and handling OpenGL drawing.
     fn render(&mut self, _args: &RenderArgs) {
         use graphics::*;
 
@@ -87,11 +94,11 @@ impl App {
     }
 }
 
+// Function to initialize the game, create the window, and run the game loop.
 fn run_the_game(game: GameType) {
 // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
 
-    // Create a Glutin window.
     let mut window: Window = WindowSettings::new(
         "Game of Life",
         [game.grid_size.0 as f64 * game.cell_size, game.grid_size.1 as f64 * game.cell_size]
@@ -101,7 +108,6 @@ fn run_the_game(game: GameType) {
         .build()
         .unwrap();
 
-    // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
         game,
@@ -127,6 +133,7 @@ fn run_the_game(game: GameType) {
     }
 }
 
+// The main entry point of the program, initializes the game and starts the game loop.
 fn main() {
     println!("Starting!");
     let mut game: GameType = Game::initialize(GRID_SIZE, CELL_SIZE);
