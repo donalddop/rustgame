@@ -26,20 +26,13 @@ use piston::window::WindowSettings;
 use rand::random;
 use crate::game::GridCoords;
 
-const TARGET_FPS: u64 = 144;
-const GRID_SIZE: (i32, i32) = (100, 150);
+const TARGET_FPS: u64 = 100;
+const GRID_SIZE: (i32, i32) = (200, 150);
 const CELL_SIZE: f64 = 3.0;
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-struct Batch {
-    colors: Vec<[f32; 4]>,
-    transforms: Vec<graphics::math::Matrix2d>,
-}
-
-// Represents the main application struct responsible for managing game state and rendering.
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    game: GameType,
-    batch: Batch,
+    game: GameType
 }
 
 impl App {
@@ -48,9 +41,8 @@ impl App {
         live_cells: &HashSet<GridCoords>,
         cell_size: f64,
         c: Context,
-        _gl: &mut G,
-        batch: &mut Batch,
-
+        gl: &mut G,
+        square: graphics::types::Rectangle,
     ) where
         G: Graphics,
     {
@@ -63,8 +55,7 @@ impl App {
             let x_move = coords.0 as f64 * cell_size;
             let y_move = coords.1 as f64 * cell_size;
             let transform = transform_base.trans(x_move, y_move);
-            batch.colors.push(color);
-            batch.transforms.push(transform);
+            rectangle(color, square, transform, gl)
         }
     }
 
@@ -76,15 +67,10 @@ impl App {
         let cell_size = self.game.cell_size;
         let live_cells = &self.game.live_cells;
 
-        self.batch.colors.clear();
-        self.batch.transforms.clear();
-
         self.gl.draw(_args.viewport(), |c, gl| {
             App::draw_grid(live_cells, cell_size, c, gl, &mut self.batch);
             clear(BLACK, gl);
-            for (&color, &transform) in self.batch.colors.iter().zip(self.batch.transforms.iter()) {
-                rectangle(color, square, transform, gl);
-            }
+            App::draw_grid(live_cells, cell_size, c, gl, square);
         });
     }
 
@@ -110,8 +96,7 @@ fn run_the_game(game: GameType) {
 
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        game,
-        batch: Batch { colors: vec![], transforms: vec![] },
+        game
     };
 
     let mut events = Events::new(EventSettings::new().max_fps(TARGET_FPS));
