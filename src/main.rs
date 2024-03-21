@@ -24,6 +24,7 @@ use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::{Button, ButtonEvent, ButtonState, EventLoop, MouseButton};
 use piston::window::WindowSettings;
 use rand::random;
+use graphics::rectangle;
 use crate::game::GridCoords;
 
 const TARGET_FPS: u64 = 100;
@@ -68,7 +69,6 @@ impl App {
         let live_cells = &self.game.live_cells;
 
         self.gl.draw(_args.viewport(), |c, gl| {
-            App::draw_grid(live_cells, cell_size, c, gl, &mut self.batch);
             clear(BLACK, gl);
             App::draw_grid(live_cells, cell_size, c, gl, square);
         });
